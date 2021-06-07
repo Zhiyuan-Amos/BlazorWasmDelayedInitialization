@@ -1,0 +1,30 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [ master ]
+jobs:
+  deploy-to-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.300'
+
+    - name: Publish .NET Project
+      run: dotnet publish BlazorWasmPostRenderInitialization.csproj -c Release -o release --nologo
+
+    - name: Change base-tag in index.html from / to BlazorWasmPostRenderInitialization
+      run: sed -i 's/<base href="\/" \/>/<base href="\/BlazorWasmPostRenderInitialization\/" \/>/g' release/wwwroot/index.html
+
+    - name: Add .nojekyll file
+      run: touch release/wwwroot/.nojekyll
+
+    - name: Commit wwwroot to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@4.1.4
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: release/wwwroot
